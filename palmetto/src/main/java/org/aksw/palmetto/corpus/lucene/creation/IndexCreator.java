@@ -1,5 +1,6 @@
 package org.aksw.palmetto.corpus.lucene.creation;
 
+import edu.stanford.nlp.process.Morphology;
 import org.aksw.palmetto.Palmetto;
 
 import java.io.BufferedReader;
@@ -16,6 +17,30 @@ import java.util.List;
  * each following argument will be treated as a file containing one document per line.
  */
 public class IndexCreator {
+
+  private static Morphology stemmer = new Morphology();
+
+  private static String[] stemWords(String[] words) {
+    String[] defensiveCopy = Arrays.copyOf(words, words.length);
+
+    for (int i=0; i<defensiveCopy.length; i++) {
+      defensiveCopy[i] = stemmer.stem(defensiveCopy[i]);
+    }
+
+    return defensiveCopy;
+  }
+
+
+  private static String combineToLine(String[] words) {
+    StringBuilder combiner = new StringBuilder();
+
+    for (String w : words) {
+      combiner.append(w).append(" ");
+    }
+
+    return combiner.toString().trim();
+  }
+
 
   public static void main(String... args) throws IOException {
 
@@ -41,7 +66,13 @@ public class IndexCreator {
         while ((line = br.readLine()) != null) {
           System.out.print(".");
 
-          IndexableDocument doc = new IndexableDocument(line, line.split("\\s").length);
+          // stem all words
+          String[] words = stemWords(line.split("\\s"));
+
+          // combine all stemmed words back into a sentence. todo: update IndexableDocument to support tokens
+          String stemmedLine = combineToLine(words);
+
+          IndexableDocument doc = new IndexableDocument(stemmedLine, words.length);
           documents.add(doc);
         }
       }
